@@ -1,0 +1,146 @@
+---
+title: "Assignment 3"
+author: "Nataly Aranda"
+date: "05/04/2022"
+output: html_document
+---
+# Analysis Report of Average Temperature Data Series - America   
+## by Nataly Aranda   
+#### Dataset Source: https://www.kaggle.com/datasets/sudalairajkumar/daily-temperature-of-major-cities , Data description: https://academic.udayton.edu/kissock/http/Weather/source.htm   
+
+
+---------------------------------------
+
+The library tidyverse will be used in this analysis. Tidyvers includes packages as ggplot used for graphs and visualizations, dplyr used for data manipulation, readr used for data import and more. The first step is then call the tidyverse library as follow:
+
+```{r, warning=FALSE, message=FALSE}
+library(tidyverse)
+```
+
+
+The data set selected for this analysis is city_temperatures.csv. This is a data set with average temperatures for the major cities of the world, this data set includes 8 fields: Region, Country, State, City, month, day, year, average daily temperature (F). 
+In total, we have 2906327 records for the 8 fields. 
+
+
+```{r}
+temperatures=read.csv('city_temperature.csv',TRUE,',')
+str(temperatures)
+map_chr(temperatures,typeof)
+head(temperatures)
+```
+
+### Creating a subset for analyzing only the temparatures for countries in America and Caribbean
+For analyzing only temperatures in countries of America, the first step is to create a subset for data of temperatures for countries located South America, Central America and North America. This new data set will be called America_Temperatures.
+
+```{r}
+America_Temperatures <- subset(temperatures,Region=="South/Central America & Carribean" | Region=="North America", select=Region:AvgTemperature)
+head(America_Temperatures)
+```
+### Cleaning the data
+
+The next step is to clean the data:
+
+1. Delete values without values for temperatures
+2. Convert the temperature from Fahrenheit to Celsius/
+3. Group the data by country and year and calculate maximum and minimum temperatures for each year in each country.
+
+Step by step
+
+1. Deleting the data with values of temperature of -99 (values with no temperature recorded for that day).
+
+```{r}
+America_Temperatures <- America_Temperatures %>% filter(AvgTemperature > -99)
+
+```
+
+2. As the original data is in Fahrenheit, we will create a new column converting the Avg Temperature to degree Celsius.
+
+```{r}
+America_Temperatures['AvgTemperatureC']= (America_Temperatures['AvgTemperature']-32)/1.8
+```
+
+3. Finally, we will group the data by country and year and calculate the maximum and minimum temperature of the data grouped.
+
+```{r}
+AmericaMaxMinTemp <- America_Temperatures %>% group_by(Region,Country, Year) %>% summarise(MaxTemp=max(AvgTemperatureC),MinTemp=min(AvgTemperatureC))
+head(AmericaMaxMinTemp)
+```
+
+Now our data is ready to be analyzed. 
+
+
+## Data Analysis
+
+First, I wanted to see the variation of temperature for each country in America.
+For doing that, I used the America_Temperatures data set, the following graphs using box whiskers show that variations:
+
+```{r fig.align="center",fig.width = 10}
+ggplot(America_Temperatures, aes(y = Country, x = AvgTemperatureC, fill = Country)) + 
+  geom_boxplot() + stat_summary(fun = "mean", geom = "point", shape = 8, size = 2, color = "white")
+```
+
+We observed that US and Canada are the countries with most variation in temperatures. Also it is possible to see that the inter tropic countries do not present higher variations in temperatures, as was expected because they do not have stations. 
+
+
+### How have the maximum and minimum temperatures changed in America?
+To analyze how the temperature has been changed in time, I plotted the maximum and minimum temperatures by year and country. I grouped the countries in regions as follow:   
+
+ * South America: Venezuela, Colombia, Brazil, Ecuador, Peru, Bolivia, Argentina, Uruguay, Suriname, Guyana        
+ * Central America: Panama, Costa Rica, Nicaragua, Honduras, Guatemala, Belize       
+ * Caribbean: Bahamas, Barbados, Bermuda, Cuba, Dominican Republic, Haiti      
+ * North America: Canada, US, Mexico      
+ 
+#### South America
+The changes in time for maximum and minimum average temperatures for countries in South America are shown in the next two graphs, plotted using ggplot. 
+
+``` {r fig.align="center",fig.width = 14}
+ggplot(data = filter(AmericaMaxMinTemp,Country == "Colombia"| Country=="Venezuela"| Country=="Ecuador" | Country=="Peru"| Country=="Brazil" | Country=="Bolivia"| Country=="Argentina"|Country=="Uruguay" |Country=="Suriname" |Country=="Guyana")) +  geom_smooth(mapping = aes(x = Year, y = MaxTemp, color=Country))+ geom_point(mapping = aes(x = Year, y = MaxTemp, color=Country))+ ggtitle("Maximum Average Temperature- South America Countries")
+
+ggplot(data = filter(AmericaMaxMinTemp,Country == "Colombia"| Country=="Venezuela"| Country=="Ecuador" | Country=="Peru"| Country=="Brazil" | Country=="Bolivia"| Country=="Argentina"|Country=="Uruguay"|Country=="Suriname" |Country=="Guyana" )) +  geom_smooth(mapping = aes(x = Year, y = MinTemp, color=Country))+ geom_point(mapping = aes(x = Year, y = MinTemp, color=Country))+ ggtitle("Minimum Average Temperature- South America Countries")
+
+```
+
+
+#### Central America
+The changes in time for maximum and minimum average temperatures for countries in Central America are shown in the next two graphs, plotted using ggplot. 
+``` {r fig.align="center",fig.width = 14}
+ggplot(data = filter(AmericaMaxMinTemp,Country == "Panama"| Country=="Costa Rica"| Country=="Nicaragua" | Country=="Honduras"| Country=="Guatemala" | Country=="Belize")) +  geom_smooth(mapping = aes(x = Year, y = MaxTemp, color=Country))+ geom_point(mapping = aes(x = Year, y = MaxTemp, color=Country))+ ggtitle("Maximum Average Temperature- Central America Countries")
+
+ggplot(data = filter(AmericaMaxMinTemp,Country == "Panama"| Country=="Costa Rica"| Country=="Nicaragua" | Country=="Honduras"| Country=="Guatemala" | Country=="Belize")) +  geom_smooth(mapping = aes(x = Year, y = MinTemp, color=Country))+ geom_point(mapping = aes(x = Year, y = MinTemp, color=Country))+ ggtitle("Minimum Average Temperature- Central America Countries")
+
+```
+
+
+#### Norht America
+The changes in time for maximum and minimum average temperatures for countries in North America are shown in the next two graphs, plotted using ggplot.
+``` {r fig.align="center",fig.width = 14}
+ggplot(data = filter(AmericaMaxMinTemp, Country=="Canada"|Country=="US" |Country=="Mexico")) +  geom_smooth(mapping = aes(x = Year, y = MaxTemp, color=Country))+ geom_point(mapping = aes(x = Year, y = MaxTemp, color=Country)) + ggtitle("Maximum Average Temperature- North America Countries")
+
+ggplot(data = filter(AmericaMaxMinTemp, Country=="Canada"|Country=="US" |Country=="Mexico" )) +  geom_smooth(mapping = aes(x = Year, y = MinTemp, color=Country))+ geom_point(mapping = aes(x = Year, y = MinTemp, color=Country))+ ggtitle("Minimum Average Temperature- North America Countries")
+
+```
+
+#### Caribbean
+The changes in time for maximum and minimum average temperatures for countries in Caribbean are shown in the next two graphs, plotted using ggplot.
+
+``` {r fig.align="center",fig.width = 14, message=FALSE}
+ggplot(data = filter(AmericaMaxMinTemp,Country == "Bahamas"| Country=="Barbados"| Country=="Bermuda" | Country=="Cuba"| Country=="Dominican Republic" | Country=="Haiti")) +  geom_smooth(mapping = aes(x = Year, y = MaxTemp, color=Country))+ geom_point(mapping = aes(x = Year, y = MaxTemp, color=Country)) + ggtitle("Maximum Average Temperature- Caribbean Countries")
+
+ggplot(data = filter(AmericaMaxMinTemp,Country == "Bahamas"| Country=="Barbados"| Country=="Bermuda" | Country=="Cuba"| Country=="Dominican Republic" | Country=="Haiti")) +  geom_smooth(mapping = aes(x = Year, y = MinTemp, color=Country))+ geom_point(mapping = aes(x = Year, y = MinTemp, color=Country))+ ggtitle("Minimum Average Temperature- Caribbean Countries")
+
+```
+
+## Trends observed
+
+We could observed in the plots of maximum and minimum temperatures along the time, that in general there is a trend of increase in temperature for the countries in America. 
+The countries located in the Caribbean are the ones that showed higher increments in minimum temperature along the time. Argentina, Bolivia and Uruguay also showed a high increase of minimum temperature along the time.
+
+On the other hand, some countries in Central America showed a decrease of maximum temperature along the time, those countries were: Honduras, Guatemala and Costa Rica. However, this behavior was not observed for the minimum temperature that showed and increment with time. 
+
+
+# Conclusion
+Using R we could analyzed the change in temperature along the time for some countries in America. We could see that in general the temperatures have increased with time for the majority of countries in America. 
+
+
+
+
